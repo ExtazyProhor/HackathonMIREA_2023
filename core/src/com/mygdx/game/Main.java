@@ -9,6 +9,7 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.mygdx.game.RealClasses.Rectangle;
 import com.mygdx.game.Screens.FlappyBird;
 
 import java.util.Random;
@@ -40,15 +41,8 @@ public class Main extends Game {
 		pppY = scrY/100;
 
 		prefs = Gdx.app.getPreferences("HackathonMainSaves");
-		loadPrefs();
 
 		clickSound = Gdx.audio.newSound(Gdx.files.internal("general/click.mp3"));
-
-		/*if(!prefs.contains("money") && !prefs.contains("sapphires")){
-			money = 150;
-			sapphires = 100;
-			savePrefs();
-		}*/
 
 		random = new Random();
 
@@ -80,30 +74,6 @@ public class Main extends Game {
 		clickSound.dispose();
 	}
 
-	public static void savePrefs(){
-		/*prefs.putInteger("selectedLanguage", selectedLanguage);
-		prefs.putFloat("soundVolume", soundVolume);
-		prefs.putFloat("musicVolume", musicVolume);
-		prefs.putInteger("soundOn", soundOn);
-		prefs.putInteger("musicOn", musicOn);
-
-		prefs.putLong("money", money);
-		prefs.putLong("sapphires", sapphires);
-
-		prefs.flush();*/
-	}
-
-	public void loadPrefs(){
-		/*soundVolume = prefs.getFloat("soundVolume", 1f);
-		musicVolume = prefs.getFloat("musicVolume", 1f);
-		soundOn = prefs.getInteger("soundOn", 1);
-		musicOn = prefs.getInteger("musicOn", 1);
-		selectedLanguage = prefs.getInteger("selectedLanguage", 0);
-
-		money = prefs.getLong("money", 0);
-		sapphires = prefs.getLong("sapphires", 0);*/
-	}
-
 	public static float textureAspectRatio(Texture texture, boolean toHeight){
 		if(toHeight) return (float) texture.getWidth() / texture.getHeight();
 		return (float) texture.getHeight() / texture.getWidth();
@@ -130,5 +100,10 @@ public class Main extends Game {
 		else if(value >= 100000000) newNumber += " M";
 		else if(value >= 100000) newNumber += " K";
 		return newNumber;
+	}
+
+	public static void draw(Texture picture, Rectangle rectangle){
+		batch.draw(picture, rectangle.getX(), rectangle.getY(),
+				rectangle.getSizeX(), rectangle.getSizeY());
 	}
 }

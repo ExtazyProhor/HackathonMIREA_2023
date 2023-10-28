@@ -59,4 +59,20 @@ public class Rectangle {
     public float getSizeY() {
         return sizeY;
     }
+
+    public Point getCornerLD(){
+        return new Point(this.x, this.y);
+    }
+
+    public Point getCornerRD(){
+        return new Point(this.x + this.sizeX, this.y);
+    }
+
+    public Point getCornerLU(){
+        return new Point(this.x, this.y + this.sizeY);
+    }
+
+    public Point getCornerRU(){
+        return new Point(this.x + this.sizeX, this.y + this.sizeY);
+    }
 }

@@ -49,6 +49,9 @@ public class FlappyBird implements Screen {
     int deathBirdIndex = -1;
     Texture deadBird;
 
+    float time = 0;
+    float targetTime = 1;
+
     // Sounds
     Sound pointSound;
     Sound deadSound;
@@ -59,8 +62,16 @@ public class FlappyBird implements Screen {
     // score
     long score;
     long highScore;
-    TextBox scoreUI;
-    TextBox highScoreUI;
+    TextBox scoreText;
+    TextBox highScoreText;
+    PictureBox scoreUI;
+    PictureBox highScoreUI;
+
+    Rectangle[] livesPositions;
+    Texture redHeart;
+    Texture greyHeart;
+    final int MAX_LIVES = 3;
+    int lives;
 
     public FlappyBird(Main game) {
         this.game = game;
@@ -98,23 +109,40 @@ public class FlappyBird implements Screen {
         backGround = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
                 pz.getSizeY(), "background.png");
         startOverlay = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
-                pz.getSizeY(), "start overlay.png");
+                pz.getSizeY(), "UI/start overlay.png");
         base = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
                 pz.getSizeX() / 3, "base.png");
-        restartButton = new Button(pz.getX() + ppX * 20, pz.getY() + ppY * 60, ppX * 60, ppX * 24,
+        restartButton = new Button(pz.getX() + ppX * 20, pz.getY() + ppY * 55, ppX * 60, ppX * 24,
                 "restart.png", "restart", 0xffffffff, (int)ppX * 12);
 
         birds = new ArrayList<>();
         deadBird = new Texture("birds/deadBird.png");
         pipe = new PictureBox(pz.getX() + ppX * 20, 0, 75 * ppY * pipeAspectRatio, 75 * ppY,
-                "bluePipe.png");
+                "pipes/pipe-0.png");
 
-        scoreUI = new TextBox(pz.getX() + ppX * 20, pz.getY() + ppY * 98, String.valueOf(score),
-                0xffffffff, (int)ppX * 10);
-        highScoreUI = new TextBox(pz.getX() + ppX * 40, pz.getY() + ppY * 98, String.valueOf(score),
-                0xffffffff, (int)ppX * 10);
-
+        scoreText = new TextBox(pz.getCornerLU().x + 35 * ppX, pz.getY() + ppY * 98,
+                String.valueOf(score), 0xffffffff, (int)ppX * 10);
         respawn();
+        highScoreText = new TextBox(pz.getCornerLU().x + 75 * ppX, pz.getY() + ppY * 98,
+                String.valueOf(highScore), 0xffffffff, (int)ppX * 10);
+
+        float uiHeight = 40 * ppX / 3;
+        scoreUI = new PictureBox(pz.getCornerLU().x + 20 * ppX, pz.getCornerLU().y - uiHeight,
+                40 * ppX, uiHeight, "UI/score.png");
+        highScoreUI = new PictureBox(pz.getCornerLU().x + 60 * ppX, pz.getCornerLU().y - uiHeight,
+                40 * ppX, uiHeight, "UI/highScore.png");
+
+        float healthSize = 6 * ppX;
+        livesPositions = new Rectangle[3];
+        livesPositions[0] = new Rectangle(pz.getCornerLU().x + ppX, pz.getCornerLU().y - ppX -  healthSize,
+                healthSize,healthSize);
+        livesPositions[1] = new Rectangle(pz.getCornerLU().x + 7 * ppX, pz.getCornerLU().y - 4 * ppX -  healthSize,
+                healthSize,healthSize);
+        livesPositions[2] = new Rectangle(pz.getCornerLU().x + 13 * ppX, pz.getCornerLU().y - ppX -  healthSize,
+                healthSize,healthSize);
+
+        redHeart = new Texture("UI/redHeart.png");
+        greyHeart = new Texture("UI/greyHeart.png");
     }
 
     @Override
@@ -127,12 +155,20 @@ public class FlappyBird implements Screen {
                 if (Gdx.input.isTouched()) state = State.FLY;
                 break;
             case FLY:
-                moveDeadBird();
                 movePipes();
                 moveBirds();
                 isCollide();
                 break;
+            case LOSE:
+                moveDeadBirds();
+                time += Gdx.graphics.getDeltaTime();
+                if(time >= targetTime){
+                    time = 0;
+                    state = State.PAUSE;
+                }
+                break;
             case PAUSE:
+                moveDeadBirds();
                 restartButton.draw();
                 if(Gdx.input.justTouched()){
                     if(restartButton.isTouched(true)){
@@ -152,7 +188,9 @@ public class FlappyBird implements Screen {
             birds.add(spawnBird(pz.getX() + (i + 2) * 40 * ppY));
         }
         score = 0;
+        scoreText.changeText("0");
         highScore = prefs.getLong("highScore", 0);
+        lives = 3;
     }
 
     public Bird spawnBird(float coordinateX){
@@ -163,25 +201,32 @@ public class FlappyBird implements Screen {
 
     }
 
-    public void moveDeadBird(){
+    public void moveBirds() {
         for(int i = 0; i < birdsQuantity; ++i){
-            if (birds.get(i).getY() + birds.get(i).getSizeX()
-                    < pz.getSizeX() / 3 && birds.get(i).isGreen) {
-                state = State.PAUSE;
-                break;
-            }
-        }
-    }
-
-    public void moveBirds(){
-        for(int i = 0; i < birdsQuantity; ++i){
+            float x1 = birds.get(i).getCornerRU().x;
             birds.get(i).moveBird();
+            float x2 = birds.get(i).getCornerRU().x;
+            if(!(x1 > pz.getX() + ppX * 20 && x2 < pz.getX() + ppX * 20)) continue;
+            if(birds.get(i).isGreen){
+                score++;
+                scoreText.changeText(String.valueOf(score));
+                pointSound.play();
+            } else {
+                death(i);
+            }
         }
 
         if(birds.get(0).getVirtualX() + birds.get(0).getSizeX() < pz.getX()) {
             birds.get(0).dispose();
-            float x = birds.remove(0).getX();
+            float x = birds.remove(0).getVirtualX();
             birds.add(spawnBird(x + 120 * ppY));
+        }
+    }
+
+    public void moveDeadBirds(){
+        for(int i = 0; i < birdsQuantity; ++i){
+            if (birds.get(i).isAlive) continue;
+            birds.get(i).moveBird();
         }
     }
 
@@ -214,10 +259,27 @@ public class FlappyBird implements Screen {
                     Collision.isCollision(pipe_2, birds.get(i))) {
                 birds.get(i).isAlive = false;
                 if(birds.get(i).isGreen){
-                    deadSound.play(0.75f);
-                } else killSound.play();
+                    death(i);
+                } else {
+                    killSound.play();
+                    score++;
+                    scoreText.changeText(String.valueOf(score));
+                }
                 break;
             }
+        }
+    }
+
+    public void death(int index){
+        deadSound.play(0.75f);
+        deathBirdIndex = index;
+        if(--lives > 0) return;
+        state = State.LOSE;
+        if (score > highScore) {
+            prefs.putLong("highScore", score);
+            prefs.flush();
+            highScore = score;
+            highScoreText.changeText(String.valueOf(highScore));
         }
     }
 
@@ -232,6 +294,19 @@ public class FlappyBird implements Screen {
             birds.get(i).draw();
         }
 
+        int i = 0;
+        for(; i < lives; ++i){
+            Main.draw(redHeart, livesPositions[i]);
+        }
+        for(; i < MAX_LIVES; ++i) {
+            Main.draw(greyHeart, livesPositions[i]);
+        }
+
+        scoreUI.draw();
+        highScoreUI.draw();
+        scoreText.draw();
+        highScoreText.draw();
+
         base.draw();
         space[0].draw();
         space[1].draw();
@@ -239,6 +314,9 @@ public class FlappyBird implements Screen {
 
     @Override
     public void dispose() {
+        redHeart.dispose();
+        greyHeart.dispose();
+
         backGround.dispose();
         startOverlay.dispose();
 
@@ -257,6 +335,8 @@ public class FlappyBird implements Screen {
         restartButton.dispose();
         scoreUI.dispose();
         highScoreUI.dispose();
+        scoreText.dispose();
+        highScoreText.dispose();
 
         killSound.dispose();
         deadSound.dispose();
@@ -291,6 +371,7 @@ public class FlappyBird implements Screen {
     private enum State{
         START,
         FLY,
+        LOSE,
         PAUSE
     }
 }
