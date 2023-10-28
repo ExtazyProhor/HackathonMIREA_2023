@@ -10,7 +10,7 @@ public class TextBox extends Rectangle {
     String text;
 
     public TextBox(float centerX, float y, String text, int textColor, int textSize) {
-        position = Position.MIDDLE;
+        position = Position.CENTER;
         font = new BitmapFont();
         Main.parameter.color = new Color(textColor);
         Main.parameter.size = textSize;
@@ -23,22 +23,31 @@ public class TextBox extends Rectangle {
         this.y = y;
     }
 
-    public void positionToLeft(float leftX){
+    public void setPositionLeft(float leftX){
         position = Position.LEFT;
         this.x = leftX;
     }
 
-    public void positionToRight(float rightX){
+    public void setPositionRight(float rightX){
         position = Position.RIGHT;
         this.x = rightX - this.sizeX;
     }
 
-    public void positionToMiddleY(float middleY){
+    public void setPositionCenter(float centerX){
+        position = Position.CENTER;
+        this.x = centerX - this.sizeX / 2;
+    }
+
+    public void setPositionMiddle(float middleY){
         this.y = middleY + this.sizeY/2;
     }
 
-    public void positionToDown(float downY){
+    public void setPositionDown(float downY){
         this.y = downY + sizeY;
+    }
+
+    public void setPositionUp(float upY){
+        this.y = upY;
     }
 
     public void draw() {
@@ -49,9 +58,16 @@ public class TextBox extends Rectangle {
         this.font.draw(Main.batch, this.text, x, y);
     }
 
+    public void draw(String text){
+        if(!this.text.equals(text)){
+            this.changeText(text);
+        }
+        this.draw();
+    }
+
     public void changeText(String newText){
         switch (this.position){
-            case MIDDLE:
+            case CENTER:
                 this.x += sizeX/2;
                 break;
             case RIGHT:
@@ -63,7 +79,7 @@ public class TextBox extends Rectangle {
         this.sizeX = (int) Main.gl.width;
         this.sizeY = (int) Main.gl.height;
         switch (this.position){
-            case MIDDLE:
+            case CENTER:
                 this.x -= sizeX/2;
                 break;
             case RIGHT:
@@ -82,7 +98,7 @@ public class TextBox extends Rectangle {
 
     enum Position {
         LEFT,
-        MIDDLE,
+        CENTER,
         RIGHT
     }
 }

@@ -50,25 +50,25 @@ public class Main extends Game {
 			savePrefs();
 		}*/
 
-		flappyBird = new FlappyBird(this);
-
 		random = new Random();
 
 		initializationFont();
 		batch = new SpriteBatch();
 		batch.enableBlending();
 
+		flappyBird = new FlappyBird(this);
+
 		setScreen(flappyBird);
 	}
 
 	void initializationFont(){
-		generator = new FreeTypeFontGenerator(Gdx.files.internal("general/FlappyBirdRegular.ttf"));
+		generator = new FreeTypeFontGenerator(Gdx.files.internal("general/Visitor Rus.ttf"));
 		parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 		parameter.characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" +
 				"абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ" +
 				"абвгддждзеёжзійклмнопрстуўфхцчшыьэюяАБВГДДЖДЗЕЁЖЗІЙКЛМНОПРСТУЎФХЦЧШЫЬЭЮЯ" +
 				"0123456789][_!$%#@|\\/?-+=()*&.;:,{}\"´`'<>";
-		parameter.borderWidth = (int)(pppY / 4);
+		parameter.borderWidth = (int)(pppY / 2);
 		parameter.borderColor = Color.valueOf("000000ff");
 		gl = new GlyphLayout();
 	}

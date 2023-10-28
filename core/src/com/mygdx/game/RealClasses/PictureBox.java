@@ -4,7 +4,7 @@ import com.badlogic.gdx.graphics.Texture;
 import static com.mygdx.game.Main.*;
 
 public class PictureBox extends Rectangle {
-    private final Texture picture;
+    private Texture picture;
 
     public PictureBox(float x, float y, float sizeX, float sizeY, String path){
         super(x, y, sizeX, sizeY);
@@ -32,6 +32,11 @@ public class PictureBox extends Rectangle {
 
     public float getTextureAspectRatio(){
         return (float)this.picture.getWidth() / (float)this.picture.getHeight();
+    }
+
+    public void changeTexture(String path){
+        this.picture.dispose();
+        this.picture = new Texture(path);
     }
 
     public void dispose(){

@@ -9,19 +9,29 @@ public class Bird extends AnimatedPictureBox {
     public static final float speedX = -0.4f;
     public float speedY;
     public float angle;
+    public boolean isGreen;
+    public boolean isAlive;
 
     public Bird(float x, float y, float sizeX, float sizeY, String path,
-                              String extension, int quantity, boolean isIncrease, float time) {
+                              String extension, int quantity, boolean isIncrease, float time, boolean isGreen) {
         super(x, y, sizeX, sizeY, path, extension, quantity, isIncrease, time);
+        super.setModePendulum();
         speedY = 0;
+        this.isGreen = isGreen;
+        this.isAlive = true;
 
-        angle = getAngle(speedY);
+        getAngle();
     }
 
-    private static float getAngle(float speed){
-        if (speed > 0) return 1.0f/3;
-        float angle = (float)Math.asin(speed);
-        if (angle < -90) angle = 90;
-        return angle;
+    //public void move
+
+    public void getAngle(){
+        if(!isAlive) return;
+        if (speedY > 0) {
+            angle = -30;
+            return;
+        }
+        angle = (float)Math.asin(speedY);
+        if (angle < -90) angle = -90;
     }
 }
