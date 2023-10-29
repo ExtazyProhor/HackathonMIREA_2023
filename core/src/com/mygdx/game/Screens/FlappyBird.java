@@ -217,19 +217,16 @@ public class FlappyBird implements Screen {
             pipeSkins[i] = new Texture("pipes/pipe-" + i + ".png");
         }
 
-        float pipeButtonSize = 6 * ppY;
+        float pipeButtonSize = 12 * ppY;
         pipeSkinSelector = new PictureBox(0, 0, pipeButtonSize, pipeButtonSize, "pipes/selector.png");
         selectedPipe = prefs.getInteger("selectedPipe", 0);
 
         pipeSkinsButton = new Button[4];
-        pipeSkinsButton[0] = new Button(pz.getX() + 5 * ppY, pz.getY() + ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-0.png");
-        pipeSkinsButton[1] = new Button(pz.getX() + 5 * ppY, pz.getY() + 8 * ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-1.png");
-        pipeSkinsButton[2] = new Button(pz.getX() + 13 * ppY, pz.getY() + ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-2.png");
-        pipeSkinsButton[3] = new Button(pz.getX() + 13 * ppY, pz.getY() + 8 * ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-3.png");
+
+        for(int i = 0; i < pipeSkinsButton.length; ++i){
+            pipeSkinsButton[i] = new Button(pz.getX() + 3 * ppX + i * (pipeButtonSize + 3 * ppX), pz.getY() + 2 * ppY,
+                    pipeButtonSize, pipeButtonSize, "pipes/color-" + i + ".png");
+        }
 
         // birds:
         birds = new ArrayList<>();
