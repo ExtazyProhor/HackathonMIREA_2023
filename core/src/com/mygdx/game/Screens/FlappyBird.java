@@ -4,6 +4,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.mygdx.game.Bird;
@@ -28,6 +29,15 @@ public class FlappyBird implements Screen {
     public static float ppX;
     public static float ppY;
 
+    PictureBox[] skyObjects;
+    PictureBox clouds;
+    float cloudX;
+
+    // BG colors:
+    Color[] colors;
+    int currentColor = 0;
+    final int MAX_COLOR = 2;
+
     // UI:
     PictureBox startOverlay;
     Button restartButton;
@@ -44,8 +54,14 @@ public class FlappyBird implements Screen {
     Texture deadBird;
 
     // time
-    float time = 0;
-    float targetTime = 1;
+    float timeToChange = 0;
+    float targetTimeToChange = 4;
+
+    float timeToWait = 0;
+    float targetTimeToWait = 20;
+
+    float timeToFall = 0;
+    float targetTimeToFall = 1;
 
     // Sounds
     Sound pointSound;
@@ -111,9 +127,9 @@ public class FlappyBird implements Screen {
                 break;
             case LOSE:
                 moveDeadBirds();
-                time += Gdx.graphics.getDeltaTime();
-                if(time >= targetTime){
-                    time = 0;
+                timeToFall += Gdx.graphics.getDeltaTime();
+                if(timeToFall >= targetTimeToFall){
+                    timeToFall = 0;
                     state = State.RESTART;
                 }
                 break;
@@ -147,6 +163,11 @@ public class FlappyBird implements Screen {
     }
 
     public void init(){
+        // Colors:
+        colors = new Color[MAX_COLOR];
+        colors[0] = new Color(0x47d7ffff);
+        colors[1] = new Color(0x010042ff);
+
         // music and sounds:
         pointSound = Gdx.audio.newSound(Gdx.files.internal("sounds/point.mp3"));
         deadSound = Gdx.audio.newSound(Gdx.files.internal("sounds/dead.wav"));
@@ -179,12 +200,18 @@ public class FlappyBird implements Screen {
         }
 
         // BG:
+        cloudX = pz.getX();
+
         backGround = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
                 pz.getSizeY(), "background.png");
         startOverlay = new PictureBox(pz.getX(), pz.getY() + ppY * 20, pz.getSizeX(),
                 pz.getSizeY(), "UI/start overlay.png");
         base = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
                 pz.getSizeX() / 3, "base.png");
+        skyObjects = new PictureBox[2];
+        skyObjects[0] = new PictureBox(backGround, "sun.png");
+        skyObjects[1] = new PictureBox(backGround, "moon.png");
+        clouds = new PictureBox(backGround, "clouds.png");
 
         // buttons:
         restartButton = new Button(pz.getX() + ppX * 20, pz.getY() + ppY * 50, ppX * 60, ppX * 24,
@@ -285,6 +312,8 @@ public class FlappyBird implements Screen {
     }
 
     public void moveBirds() {
+        cloudX -= 1;
+        if(cloudX < pz.getX() - pz.getSizeX()) cloudX += pz.getSizeX();
         for(int i = 0; i < birdsQuantity; ++i){
             float x1 = birds.get(i).getCornerRU().x;
             birds.get(i).moveBird();
@@ -367,8 +396,31 @@ public class FlappyBird implements Screen {
     }
 
     public void draw(){
-        ScreenUtils.clear(1, 1, 1, 1);
+        if(timeToWait < targetTimeToWait){
+            timeToWait += Gdx.graphics.getDeltaTime();
+            ScreenUtils.clear(colors[currentColor]);
+            skyObjects[currentColor].draw();
+        } else if (timeToChange < targetTimeToChange) {
+            timeToChange += Gdx.graphics.getDeltaTime();
+            ScreenUtils.clear(getMiddleValue(colors[currentColor],
+                    colors[(currentColor + 1) % MAX_COLOR],
+                    timeToChange / targetTimeToChange));
+            skyObjects[currentColor].draw(
+                    pz.getX() - (timeToChange / targetTimeToChange) * pz.getSizeX(), pz.getY());
+            skyObjects[(currentColor + 1) % MAX_COLOR].draw(
+                    pz.getX() - (timeToChange / targetTimeToChange) * pz.getSizeX() + pz.getSizeX(),
+                    pz.getY());
+        } else {
+            ScreenUtils.clear(colors[(currentColor + 1) % MAX_COLOR]);
+            skyObjects[(currentColor + 1) % MAX_COLOR].draw();
+            timeToWait = 0;
+            timeToChange = 0;
+            currentColor = (currentColor + 1) % MAX_COLOR;
+        }
+        //ScreenUtils.clear(1, 0, 0, 1);
         backGround.draw();
+        clouds.draw(cloudX, clouds.getY());
+        clouds.draw(cloudX + pz.getSizeX(), clouds.getY());
 
         Main.draw(pipeSkins[selectedPipe], pipe, pipe.getX(), pipesCoordinateY, false, true);
         Main.draw(pipeSkins[selectedPipe], pipe, pipe.getX(),
@@ -398,6 +450,10 @@ public class FlappyBird implements Screen {
 
     @Override
     public void dispose() {
+        skyObjects[0].dispose();
+        skyObjects[1].dispose();
+        clouds.dispose();
+
         redHeart.dispose();
         greyHeart.dispose();
 

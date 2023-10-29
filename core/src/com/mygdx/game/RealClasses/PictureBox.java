@@ -10,6 +10,11 @@ public class PictureBox extends Rectangle {
         super(x, y, sizeX, sizeY);
         picture = new Texture(path);
     }
+    public PictureBox(Rectangle rectangle, String path){
+        super(rectangle.x, rectangle.y, rectangle.sizeX, rectangle.sizeY);
+        picture = new Texture(path);
+    }
+
     public void draw(){
         batch.draw(picture, x, y, sizeX, sizeY);
     }
