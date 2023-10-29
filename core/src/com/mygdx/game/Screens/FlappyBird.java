@@ -1,7 +1,6 @@
 package com.mygdx.game.Screens;
 
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
@@ -9,7 +8,6 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.mygdx.game.Bird;
 import com.mygdx.game.Main;
-import com.mygdx.game.RealClasses.AnimatedPictureBox;
 import com.mygdx.game.RealClasses.Button;
 import com.mygdx.game.RealClasses.Collision;
 import com.mygdx.game.RealClasses.PictureBox;
@@ -19,7 +17,6 @@ import com.mygdx.game.RealClasses.TextBox;
 import static com.mygdx.game.Main.*;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 public class FlappyBird implements Screen {
     Main game;
@@ -31,23 +28,22 @@ public class FlappyBird implements Screen {
     public static float ppX;
     public static float ppY;
 
+    // UI:
     PictureBox startOverlay;
     Button restartButton;
+    Button pauseButton;
+    Button resumeButton;
 
     PictureBox[] space;
     float defaultAspectRatio = 9.0f / 16.0f;
 
-    // Pipes
-    float pipeAspectRatio = 52.0f/320.0f;
-    float distanceBetweenPipes;
-    float pipesCoordinateY;
-
-    //Birds
+    // Birds
     ArrayList<Bird> birds;
     int birdsQuantity = 3;
     int deathBirdIndex = -1;
     Texture deadBird;
 
+    // time
     float time = 0;
     float targetTime = 1;
 
@@ -55,7 +51,6 @@ public class FlappyBird implements Screen {
     Sound pointSound;
     Sound deadSound;
     Sound killSound;
-
     Music music;
 
     // score
@@ -66,107 +61,28 @@ public class FlappyBird implements Screen {
     PictureBox scoreUI;
     PictureBox highScoreUI;
 
+    // lives
     Rectangle[] livesPositions;
     Texture redHeart;
     Texture greyHeart;
     final int MAX_LIVES = 3;
     int lives;
 
+    // pipes:
+    float pipeAspectRatio = 52.0f/320.0f;
+    float distanceBetweenPipes;
+    float pipesCoordinateY;
+
     Button[] pipeSkinsButton;
     Texture[] pipeSkins;
     Rectangle pipe;
     PictureBox pipeSkinSelector;
-
     int selectedPipe;
 
     public FlappyBird(Main game) {
         this.game = game;
-
-        pointSound = Gdx.audio.newSound(Gdx.files.internal("sounds/point.mp3"));
-        deadSound = Gdx.audio.newSound(Gdx.files.internal("sounds/dead.wav"));
-        killSound = Gdx.audio.newSound(Gdx.files.internal("sounds/kill.wav"));
-
-        music = Gdx.audio.newMusic(Gdx.files.internal("music/track.mp3"));
-        music.setLooping(true);
-        music.setVolume(0.2f);
-        music.play();
-
-        boolean isWider = scrX / scrY > defaultAspectRatio;
-        float x = scrX;
-        float y = scrY;
-
-        if (isWider) x = scrY * defaultAspectRatio;
-        else y = scrX / defaultAspectRatio;
-
-        pz = new Rectangle((scrX - x) / 2, (scrY - y) / 2, x, y);
-        ppX = pz.getSizeX() / 100;
-        ppY = pz.getSizeY() / 100;
-        //distanceBetweenPipes = ppY * 25;
-        distanceBetweenPipes = ppY * 32;
-
-        space = new PictureBox[2];
-        if (isWider) {
-            space[0] = new PictureBox(0, 0, (scrX - x) / 2, scrY, "space.png");
-            space[1] = new PictureBox((scrX + x) / 2, 0, (scrX - x) / 2 + 1, scrY, "space.png");
-        } else {
-            space[0] = new PictureBox(0, 0, scrX, (scrY - y) / 2, "space.png");
-            space[1] = new PictureBox(0, (scrY + y) / 2, scrX, (scrY - y) / 2 + 1, "space.png");
-        }
-        backGround = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
-                pz.getSizeY(), "background.png");
-        startOverlay = new PictureBox(pz.getX(), pz.getY() + ppY * 20, pz.getSizeX(),
-                pz.getSizeY(), "UI/start overlay.png");
-        base = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
-                pz.getSizeX() / 3, "base.png");
-        restartButton = new Button(pz.getX() + ppX * 20, pz.getY() + ppY * 55, ppX * 60, ppX * 24,
-                "restart.png", "restart", 0xffffffff, (int)ppX * 12);
-
-        birds = new ArrayList<>();
-        deadBird = new Texture("birds/deadBird.png");
-        pipe = new Rectangle(pz.getX() + ppX * 20, 0, 75 * ppY * pipeAspectRatio, 75 * ppY);
-        pipeSkins = new Texture[4];
-        for(int i = 0; i < pipeSkins.length; ++i){
-            pipeSkins[i] = new Texture("pipes/pipe-" + i + ".png");
-        }
-        pipeSkinsButton = new Button[4];
-
-        float pipeButtonSize = 6 * ppY;
-        pipeSkinSelector = new PictureBox(0, 0, pipeButtonSize, pipeButtonSize, "pipes/selector.png");
-
-        pipeSkinsButton[0] = new Button(pz.getX() + 5 * ppY, pz.getY() + ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-0.png");
-        pipeSkinsButton[1] = new Button(pz.getX() + 5 * ppY, pz.getY() + 8 * ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-1.png");
-        pipeSkinsButton[2] = new Button(pz.getX() + 13 * ppY, pz.getY() + ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-2.png");
-        pipeSkinsButton[3] = new Button(pz.getX() + 13 * ppY, pz.getY() + 8 * ppY,
-                pipeButtonSize, pipeButtonSize, "pipes/color-3.png");
-
-        selectedPipe = prefs.getInteger("selectedPipe", 0);
-
-        scoreText = new TextBox(pz.getCornerLU().x + 35 * ppX, pz.getY() + ppY * 98,
-                String.valueOf(score), 0xffffffff, (int)ppX * 10);
+        init();
         respawn();
-        highScoreText = new TextBox(pz.getCornerLU().x + 75 * ppX, pz.getY() + ppY * 98,
-                String.valueOf(highScore), 0xffffffff, (int)ppX * 10);
-
-        float uiHeight = 40 * ppX / 3;
-        scoreUI = new PictureBox(pz.getCornerLU().x + 20 * ppX, pz.getCornerLU().y - uiHeight,
-                40 * ppX, uiHeight, "UI/score.png");
-        highScoreUI = new PictureBox(pz.getCornerLU().x + 60 * ppX, pz.getCornerLU().y - uiHeight,
-                40 * ppX, uiHeight, "UI/highScore.png");
-
-        float healthSize = 6 * ppX;
-        livesPositions = new Rectangle[3];
-        livesPositions[0] = new Rectangle(pz.getCornerLU().x + ppX, pz.getCornerLU().y - ppX -  healthSize,
-                healthSize,healthSize);
-        livesPositions[1] = new Rectangle(pz.getCornerLU().x + 7 * ppX, pz.getCornerLU().y - 4 * ppX -  healthSize,
-                healthSize,healthSize);
-        livesPositions[2] = new Rectangle(pz.getCornerLU().x + 13 * ppX, pz.getCornerLU().y - ppX -  healthSize,
-                healthSize,healthSize);
-
-        redHeart = new Texture("UI/redHeart.png");
-        greyHeart = new Texture("UI/greyHeart.png");
     }
 
     @Override
@@ -183,6 +99,12 @@ public class FlappyBird implements Screen {
                 }
                 break;
             case FLY:
+                pauseButton.draw();
+                if(Gdx.input.isTouched()){
+                    if(pauseButton.isTouched(true)){
+                        state = State.PAUSE;
+                    }
+                }
                 movePipes();
                 moveBirds();
                 isCollide();
@@ -192,12 +114,26 @@ public class FlappyBird implements Screen {
                 time += Gdx.graphics.getDeltaTime();
                 if(time >= targetTime){
                     time = 0;
-                    state = State.PAUSE;
+                    state = State.RESTART;
                 }
                 break;
             case PAUSE:
+                restartButton.draw();
+                resumeButton.draw();
+                pauseMode();
+                if(Gdx.input.justTouched()){
+                    if(restartButton.isTouched(true)){
+                        respawn();
+                        state = State.FLY;
+                    } else if(resumeButton.isTouched(true)) {
+                        state = State.FLY;
+                    }
+                }
+                break;
+            case RESTART:
                 moveDeadBirds();
                 restartButton.draw();
+
                 if(Gdx.input.justTouched()){
                     if(restartButton.isTouched(true)){
                         respawn();
@@ -208,6 +144,109 @@ public class FlappyBird implements Screen {
                 break;
         }
         batch.end();
+    }
+
+    public void init(){
+        // music and sounds:
+        pointSound = Gdx.audio.newSound(Gdx.files.internal("sounds/point.mp3"));
+        deadSound = Gdx.audio.newSound(Gdx.files.internal("sounds/dead.wav"));
+        killSound = Gdx.audio.newSound(Gdx.files.internal("sounds/kill.wav"));
+
+        music = Gdx.audio.newMusic(Gdx.files.internal("music/track.mp3"));
+        music.setLooping(true);
+        music.setVolume(0.2f);
+        music.play();
+
+        // play zone:
+        boolean isWider = scrX / scrY > defaultAspectRatio;
+        float x = scrX;
+        float y = scrY;
+
+        if (isWider) x = scrY * defaultAspectRatio;
+        else y = scrX / defaultAspectRatio;
+
+        pz = new Rectangle((scrX - x) / 2, (scrY - y) / 2, x, y);
+        ppX = pz.getSizeX() / 100;
+        ppY = pz.getSizeY() / 100;
+
+        space = new PictureBox[2];
+        if (isWider) {
+            space[0] = new PictureBox(0, 0, (scrX - x) / 2, scrY, "space.png");
+            space[1] = new PictureBox((scrX + x) / 2, 0, (scrX - x) / 2 + 1, scrY, "space.png");
+        } else {
+            space[0] = new PictureBox(0, 0, scrX, (scrY - y) / 2, "space.png");
+            space[1] = new PictureBox(0, (scrY + y) / 2, scrX, (scrY - y) / 2 + 1, "space.png");
+        }
+
+        // BG:
+        backGround = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
+                pz.getSizeY(), "background.png");
+        startOverlay = new PictureBox(pz.getX(), pz.getY() + ppY * 20, pz.getSizeX(),
+                pz.getSizeY(), "UI/start overlay.png");
+        base = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
+                pz.getSizeX() / 3, "base.png");
+
+        // buttons:
+        restartButton = new Button(pz.getX() + ppX * 20, pz.getY() + ppY * 50, ppX * 60, ppX * 24,
+                "UI/restart.png", "restart", 0xffffffff, (int)ppX * 12);
+        resumeButton = new Button(pz.getX() + ppX * 20, pz.getY() + ppY * 55 + ppX * 30, ppX * 60, ppX * 24,
+                "UI/restart.png", "resume", 0xffffffff, (int)ppX * 12);
+        float pauseButtonSize = 15 * ppX;
+        pauseButton = new Button(pz.getX() + pz.getSizeX() - pauseButtonSize - ppY,
+                pz.getY() + pz.getSizeY() - 14 * ppX - pauseButtonSize,
+                pauseButtonSize, pauseButtonSize ,"UI/pause.png");
+
+        // score:
+        highScore = prefs.getLong("highScore", 0);
+        scoreText = new TextBox(pz.getCornerLU().x + 35 * ppX, pz.getY() + ppY * 98,
+                String.valueOf(score), 0xffffffff, (int)ppX * 10);
+        highScoreText = new TextBox(pz.getCornerLU().x + 75 * ppX, pz.getY() + ppY * 98,
+                String.valueOf(highScore), 0xffffffff, (int)ppX * 10);
+
+        float uiHeight = 40 * ppX / 3;
+        scoreUI = new PictureBox(pz.getCornerLU().x + 20 * ppX, pz.getCornerLU().y - uiHeight,
+                40 * ppX, uiHeight, "UI/score.png");
+        highScoreUI = new PictureBox(pz.getCornerLU().x + 60 * ppX, pz.getCornerLU().y - uiHeight,
+                40 * ppX, uiHeight, "UI/highScore.png");
+
+        // pipes:
+        distanceBetweenPipes = ppY * 32;
+        pipe = new Rectangle(pz.getX() + ppX * 20, 0, 75 * ppY * pipeAspectRatio, 75 * ppY);
+        pipeSkins = new Texture[4];
+        for(int i = 0; i < pipeSkins.length; ++i){
+            pipeSkins[i] = new Texture("pipes/pipe-" + i + ".png");
+        }
+
+        float pipeButtonSize = 6 * ppY;
+        pipeSkinSelector = new PictureBox(0, 0, pipeButtonSize, pipeButtonSize, "pipes/selector.png");
+        selectedPipe = prefs.getInteger("selectedPipe", 0);
+
+        pipeSkinsButton = new Button[4];
+        pipeSkinsButton[0] = new Button(pz.getX() + 5 * ppY, pz.getY() + ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-0.png");
+        pipeSkinsButton[1] = new Button(pz.getX() + 5 * ppY, pz.getY() + 8 * ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-1.png");
+        pipeSkinsButton[2] = new Button(pz.getX() + 13 * ppY, pz.getY() + ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-2.png");
+        pipeSkinsButton[3] = new Button(pz.getX() + 13 * ppY, pz.getY() + 8 * ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-3.png");
+
+        // birds:
+        birds = new ArrayList<>();
+        deadBird = new Texture("birds/deadBird.png");
+
+        // health:
+        float healthSize = 6 * ppX;
+        livesPositions = new Rectangle[3];
+        livesPositions[0] = new Rectangle(pz.getCornerLU().x + ppX, pz.getCornerLU().y - ppX -  healthSize,
+                healthSize,healthSize);
+        livesPositions[1] = new Rectangle(pz.getCornerLU().x + 7 * ppX, pz.getCornerLU().y - 4 * ppX -  healthSize,
+                healthSize,healthSize);
+        livesPositions[2] = new Rectangle(pz.getCornerLU().x + 13 * ppX, pz.getCornerLU().y - ppX -  healthSize,
+                healthSize,healthSize);
+
+        redHeart = new Texture("UI/redHeart.png");
+        greyHeart = new Texture("UI/greyHeart.png");
     }
 
     public void pauseMode(){
@@ -237,7 +276,6 @@ public class FlappyBird implements Screen {
         }
         score = 0;
         scoreText.changeText("0");
-        highScore = prefs.getLong("highScore", 0);
         lives = 3;
     }
 
@@ -309,7 +347,7 @@ public class FlappyBird implements Screen {
                 if(birds.get(i).isGreen){
                     death(i);
                 } else {
-                    killSound.play();
+                    killSound.play(0.7f);
                     score++;
                     scoreText.changeText(String.valueOf(score));
                 }
@@ -388,6 +426,8 @@ public class FlappyBird implements Screen {
         }
 
         restartButton.dispose();
+        pauseButton.dispose();
+        resumeButton.dispose();
         scoreUI.dispose();
         highScoreUI.dispose();
         scoreText.dispose();
@@ -427,6 +467,7 @@ public class FlappyBird implements Screen {
         START,
         FLY,
         LOSE,
+        RESTART,
         PAUSE
     }
 }
