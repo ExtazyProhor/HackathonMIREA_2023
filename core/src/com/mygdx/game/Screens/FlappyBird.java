@@ -38,7 +38,6 @@ public class FlappyBird implements Screen {
     float defaultAspectRatio = 9.0f / 16.0f;
 
     // Pipes
-    PictureBox pipe;
     float pipeAspectRatio = 52.0f/320.0f;
     float distanceBetweenPipes;
     float pipesCoordinateY;
@@ -73,6 +72,13 @@ public class FlappyBird implements Screen {
     final int MAX_LIVES = 3;
     int lives;
 
+    Button[] pipeSkinsButton;
+    Texture[] pipeSkins;
+    Rectangle pipe;
+    PictureBox pipeSkinSelector;
+
+    int selectedPipe;
+
     public FlappyBird(Main game) {
         this.game = game;
 
@@ -82,7 +88,7 @@ public class FlappyBird implements Screen {
 
         music = Gdx.audio.newMusic(Gdx.files.internal("music/track.mp3"));
         music.setLooping(true);
-        music.setVolume(0.3f);
+        music.setVolume(0.2f);
         music.play();
 
         boolean isWider = scrX / scrY > defaultAspectRatio;
@@ -96,7 +102,7 @@ public class FlappyBird implements Screen {
         ppX = pz.getSizeX() / 100;
         ppY = pz.getSizeY() / 100;
         //distanceBetweenPipes = ppY * 25;
-        distanceBetweenPipes = ppY * 35;
+        distanceBetweenPipes = ppY * 32;
 
         space = new PictureBox[2];
         if (isWider) {
@@ -108,7 +114,7 @@ public class FlappyBird implements Screen {
         }
         backGround = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
                 pz.getSizeY(), "background.png");
-        startOverlay = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
+        startOverlay = new PictureBox(pz.getX(), pz.getY() + ppY * 20, pz.getSizeX(),
                 pz.getSizeY(), "UI/start overlay.png");
         base = new PictureBox(pz.getX(), pz.getY(), pz.getSizeX(),
                 pz.getSizeX() / 3, "base.png");
@@ -117,8 +123,26 @@ public class FlappyBird implements Screen {
 
         birds = new ArrayList<>();
         deadBird = new Texture("birds/deadBird.png");
-        pipe = new PictureBox(pz.getX() + ppX * 20, 0, 75 * ppY * pipeAspectRatio, 75 * ppY,
-                "pipes/pipe-0.png");
+        pipe = new Rectangle(pz.getX() + ppX * 20, 0, 75 * ppY * pipeAspectRatio, 75 * ppY);
+        pipeSkins = new Texture[4];
+        for(int i = 0; i < pipeSkins.length; ++i){
+            pipeSkins[i] = new Texture("pipes/pipe-" + i + ".png");
+        }
+        pipeSkinsButton = new Button[4];
+
+        float pipeButtonSize = 6 * ppY;
+        pipeSkinSelector = new PictureBox(0, 0, pipeButtonSize, pipeButtonSize, "pipes/selector.png");
+
+        pipeSkinsButton[0] = new Button(pz.getX() + 5 * ppY, pz.getY() + ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-0.png");
+        pipeSkinsButton[1] = new Button(pz.getX() + 5 * ppY, pz.getY() + 8 * ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-1.png");
+        pipeSkinsButton[2] = new Button(pz.getX() + 13 * ppY, pz.getY() + ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-2.png");
+        pipeSkinsButton[3] = new Button(pz.getX() + 13 * ppY, pz.getY() + 8 * ppY,
+                pipeButtonSize, pipeButtonSize, "pipes/color-3.png");
+
+        selectedPipe = prefs.getInteger("selectedPipe", 0);
 
         scoreText = new TextBox(pz.getCornerLU().x + 35 * ppX, pz.getY() + ppY * 98,
                 String.valueOf(score), 0xffffffff, (int)ppX * 10);
@@ -152,7 +176,11 @@ public class FlappyBird implements Screen {
         switch (state){
             case START:
                 startOverlay.draw();
-                if (Gdx.input.isTouched()) state = State.FLY;
+                pauseMode();
+                if (Gdx.input.isTouched() &&
+                        Gdx.input.getY() < pz.getY() + pz.getSizeY() - pz.getSizeX() / 3) {
+                    state = State.FLY;
+                }
                 break;
             case FLY:
                 movePipes();
@@ -176,9 +204,29 @@ public class FlappyBird implements Screen {
                         state = State.FLY;
                     }
                 }
+                pauseMode();
                 break;
         }
         batch.end();
+    }
+
+    public void pauseMode(){
+        for(int i = 0; i < pipeSkinsButton.length; ++i){
+            pipeSkinsButton[i].draw();
+        }
+        pipeSkinSelector.draw(pipeSkinsButton[selectedPipe].getX(),
+                pipeSkinsButton[selectedPipe].getY());
+
+        if(Gdx.input.justTouched()){
+            for(int i = 0; i < pipeSkinsButton.length; ++i){
+                if (pipeSkinsButton[i].isTouched(true)) {
+                    selectedPipe = i;
+                    prefs.putInteger("selectedPipe", selectedPipe);
+                    prefs.flush();
+                    return;
+                }
+            }
+        }
     }
 
     public void respawn(){
@@ -287,8 +335,9 @@ public class FlappyBird implements Screen {
         ScreenUtils.clear(1, 1, 1, 1);
         backGround.draw();
 
-        pipe.draw(pipe.getX(), pipesCoordinateY, false, true);
-        pipe.draw(pipe.getX(), pipesCoordinateY - 75 * ppY - distanceBetweenPipes);
+        Main.draw(pipeSkins[selectedPipe], pipe, pipe.getX(), pipesCoordinateY, false, true);
+        Main.draw(pipeSkins[selectedPipe], pipe, pipe.getX(),
+                pipesCoordinateY - 75 * ppY - distanceBetweenPipes, false, false);
 
         for(int i = 0; i < birdsQuantity; ++i){
             birds.get(i).draw();
@@ -330,7 +379,13 @@ public class FlappyBird implements Screen {
         space[0].dispose();
         space[1].dispose();
 
-        pipe.dispose();
+        for(int i = 0; i < pipeSkins.length; ++i){
+            pipeSkins[i].dispose();
+        }
+        pipeSkinSelector.dispose();
+        for (int i = 0; i < pipeSkinsButton.length; ++i){
+            pipeSkinsButton[i].dispose();
+        }
 
         restartButton.dispose();
         scoreUI.dispose();

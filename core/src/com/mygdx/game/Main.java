@@ -106,4 +106,9 @@ public class Main extends Game {
 		batch.draw(picture, rectangle.getX(), rectangle.getY(),
 				rectangle.getSizeX(), rectangle.getSizeY());
 	}
+
+	public static void draw(Texture picture, Rectangle rectangle, float x, float y, boolean flipX, boolean flipY){
+		batch.draw(picture, x, y, rectangle.getSizeX(), rectangle.getSizeY(), 0, 0,
+				picture.getWidth(), picture.getHeight(), flipX, flipY);
+	}
 }
